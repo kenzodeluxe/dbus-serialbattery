@@ -28,6 +28,7 @@ from jkbms import Jkbms
 from renogy import Renogy
 from ecs import Ecs
 from lifepower import Lifepower
+from seplos import Seplos
 
 supported_bms_types = [
     {"bms": LltJbd, "baud": 9600},
@@ -40,6 +41,7 @@ supported_bms_types = [
     {"bms": Renogy, "baud": 9600, "address": b"\x30"},
     {"bms": Renogy, "baud": 9600, "address": b"\xF7"},
     {"bms": Ecs, "baud": 19200},
+    {"bms": Seplos, "baud": 19200},
 ]
 expected_bms_types = [
     battery_type

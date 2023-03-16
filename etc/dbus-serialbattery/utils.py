@@ -295,7 +295,7 @@ def read_serial_data(
     command, port, baud, length_pos, length_check, length_fixed=None, length_size=None
 ):
     try:
-        with serial.Serial(port, baudrate=baud, timeout=0.1) as ser:
+        with serial.Serial(port, baudrate=baud, timeout=0.1, write_timeout=0.1) as ser:
             return read_serialport_data(
                 ser, command, length_pos, length_check, length_fixed, length_size
             )
@@ -312,7 +312,7 @@ def open_serial_port(port, baud):
     tries = 3
     while tries > 0:
         try:
-            ser = serial.Serial(port, baudrate=baud, timeout=0.1)
+            ser = serial.Serial(port, baudrate=baud, timeout=0.1, write_timeout=0.1)
             tries = 0
         except serial.SerialException as e:
             logger.error(e)
