@@ -63,8 +63,12 @@ class Seplos(Battery):
                     cell_voltage = float(int(converted[offset:offset+4],16)/1000)
                     offset += 4
                     self.cells[cell-1].voltage = cell_voltage
-                    all_cell_voltages[f'{pack}-{cell}'] = cell_voltage
-                    mqtt_msgs.append({'topic': f'{self.mqtt_topic}/pack{pack}/cell{cell}/cell_voltage', 'payload': cell_voltage})
+                    # Have seen invalid cell voltages appear, needs further investigation
+                    if cell_voltage > 2 and cell_voltage < 4:
+                        all_cell_voltages[f'{pack}-{cell}'] = cell_voltage
+                        mqtt_msgs.append({'topic': f'{self.mqtt_topic}/pack{pack}/cell{cell}/cell_voltage', 'payload': cell_voltage})
+                    else:
+                        logging.error(f'Cell {cell} in pack {pack} reports {cell_voltage}V')
                 except Exception as e:
                     logging.error(f'Unable to convert data for cell voltage, skipping battery pack {pack}')
                     break
