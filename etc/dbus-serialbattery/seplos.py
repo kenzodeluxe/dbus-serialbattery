@@ -46,6 +46,7 @@ class Seplos(Battery):
         mqtt_msgs = []
         mqtt_msgs.append({'topic':f'{self.mqtt_topic}/battery_packs_online', 'payload': len(data)})
         for pack in data:
+            invalid_data = False
             offset = 19
 
             # Get cell voltage information
@@ -68,10 +69,15 @@ class Seplos(Battery):
                         all_cell_voltages[f'{pack}-{cell}'] = cell_voltage
                         mqtt_msgs.append({'topic': f'{self.mqtt_topic}/pack{pack}/cell{cell}/cell_voltage', 'payload': cell_voltage})
                     else:
-                        logging.error(f'Cell {cell} in pack {pack} reports {cell_voltage}V')
+                        logging.error(f'Cell {cell} in pack {pack} reports {cell_voltage}V, skipping current data for battery pack.')
+                        invalid_data = True
+                        break
                 except Exception as e:
                     logging.error(f'Unable to convert data for cell voltage, skipping battery pack {pack}')
+                    invalid_data = True
                     break
+            if invalid_data:
+                break
 
             # Get BMS temperature information
             try:
