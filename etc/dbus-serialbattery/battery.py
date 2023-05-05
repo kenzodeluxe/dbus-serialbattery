@@ -91,7 +91,7 @@ class Battery(ABC):
         # max battery charge/discharge current
         self.max_battery_charge_current = None
         self.max_battery_discharge_current = None
-        self.battery_packs = None
+        self.battery_packs = utils.SEPLOS_BATTERY_PACKS if utils.SEPLOS_BATTERY_PACKS else None
 
         self.time_to_soc_update = utils.TIME_TO_SOC_LOOP_CYCLES
 

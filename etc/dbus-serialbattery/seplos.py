@@ -25,6 +25,17 @@ class Seplos(Battery):
         self.mqtt_host = 'localhost'
         self.mqtt_send = True
 
+    def convert_address(self, address):
+        send = '20' + address + '4642E00201'
+        sum = 0
+        for i in range(len(send)):
+            sum += ord(send[i])
+        bwsum = ~sum + 1
+        hexsum = format(bwsum, '04X').zfill(4)
+        hexbwsum = hex((bwsum + (1 << 16)) % (1 << 16)).lstrip('0x')
+        cmd = '~' + send + hexbwsum.upper() + '\r\n'
+        return cmd
+
     def get_bms_information(self, data):
         self.battery_packs = len(data)  # need a safeguard here?
         self.cells = []
@@ -76,8 +87,9 @@ class Seplos(Battery):
                     logging.error(f'Unable to convert data for cell voltage, skipping battery pack {pack}')
                     invalid_data = True
                     break
+            # if data received for a specific pack was incorrect, skip pack
             if invalid_data:
-                break
+                continue
 
             # Get BMS temperature information
             try:
@@ -249,21 +261,19 @@ class Seplos(Battery):
 
     def read_status_data(self):
         responses = {}
-        commands = { '01' : b'~20014642E00201FD35\r',
-                     '02' : b'~20024642E00201FD34\r',
-                     '03' : b'~20034642E00201FD33\r' }
         ser = serial.Serial(self.port, self.baud_rate, timeout = 0.1, write_timeout = 0.1)
 
         if ser.is_open:
-            packs_online = 0
-            for pack_id in commands:
-                ser.write(commands[pack_id])
+            for pack_id in range(1,self.battery_packs+1):
+                if pack_id < 10:
+                    pack_id = '0' + str(pack_id)
+                command = self.convert_address(pack_id)
+                ser.write(command.encode())
                 sleep(0.25)
                 len_return_data = ser.inWaiting()
                 if len_return_data == 0:
                     logger.error(f'Did not receive valid response from pack {pack_id}')
                     continue
-                packs_online = packs_online + 1
                 return_data = ser.read(len_return_data)
                 responses[pack_id] = return_data
         ser.close()
