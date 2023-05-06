@@ -3,8 +3,6 @@
 # Iterates over all packs and makes relevant information available to Victron as one "virtual" battery instance
 # All battery details from all packs are published to MQTT
 # To-Do:
-# - protocol implementation from above provides a generic way of addressing individual packs,
-#   current implementation is a "hack" that suits my current setup; go back to making this more generic
 # - Address FIXME statements
 # - return to generic way of using serial interface (vs. using ser.open directly)
 
@@ -23,7 +21,6 @@ class Seplos(Battery):
         self.type = "Seplos"
         self.mqtt_topic = 'seplos'
         self.mqtt_host = 'localhost'
-        self.mqtt_send = True
 
     def convert_address(self, address):
         send = '20' + address + '4642E00201'
@@ -37,7 +34,7 @@ class Seplos(Battery):
         return cmd
 
     def get_bms_information(self, data):
-        self.battery_packs = len(data)  # need a safeguard here?
+        battery_packs_online = len(data)
         self.cells = []
         for i in range(1,17):
             self.cells.append(Cell(False))  # FIXME: required?
@@ -214,21 +211,21 @@ class Seplos(Battery):
         self.cells[15].temp = max(all_cell_temp)
         all_cell_temp.sort()
 
-        self.voltage = sum(all_pack_voltage) / self.battery_packs
+        self.voltage = sum(all_pack_voltage) / battery_packs_online
         self.current = sum(all_pack_current)
         mqtt_msgs.append({'topic':f'{self.mqtt_topic}/current_total', 'payload': self.current})
         mqtt_msgs.append({'topic':f'{self.mqtt_topic}/pack_power', 'payload': self.current*self.voltage})
         self.capacity = sum(all_pack_ah_total)
         mqtt_msgs.append({'topic':f'{self.mqtt_topic}/ah_total', 'payload': self.capacity})
-        self.cycles = sum(all_pack_cycles) / self.battery_packs
+        self.cycles = sum(all_pack_cycles) / battery_packs_online
         mqtt_msgs.append({'topic':f'{self.mqtt_topic}/cycles_total', 'payload': self.cycles})
-        self.soc = sum(all_pack_soc) / self.battery_packs
+        self.soc = sum(all_pack_soc) / battery_packs_online
         mqtt_msgs.append({'topic':f'{self.mqtt_topic}/soc_total', 'payload': self.soc})
         # lowest temperature
         self.temp1 = min(all_env_temp+all_cell_temp+all_pcb_temp)
         # highest temperature
         self.temp2 = max(all_env_temp+all_cell_temp+all_pcb_temp)
-        mqtt_msgs.append({'topic':f'{self.mqtt_topic}/soh_total', 'payload': sum(all_pack_soh) / self.battery_packs})
+        mqtt_msgs.append({'topic':f'{self.mqtt_topic}/soh_total', 'payload': sum(all_pack_soh) / battery_packs_online})
         if self.mqtt_send:
             publish.multiple(mqtt_msgs, hostname=self.mqtt_host)
         return True

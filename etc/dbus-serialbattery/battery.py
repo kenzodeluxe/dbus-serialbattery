@@ -92,6 +92,7 @@ class Battery(ABC):
         self.max_battery_charge_current = None
         self.max_battery_discharge_current = None
         self.battery_packs = utils.SEPLOS_BATTERY_PACKS if utils.SEPLOS_BATTERY_PACKS else None
+        self.mqtt_send = True if utils.SEPLOS_PUBLISH_MQTT else False
 
         self.time_to_soc_update = utils.TIME_TO_SOC_LOOP_CYCLES
 
