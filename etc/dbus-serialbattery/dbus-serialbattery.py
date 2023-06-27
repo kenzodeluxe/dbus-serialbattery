@@ -28,7 +28,7 @@ from jkbms import Jkbms
 from renogy import Renogy
 from ecs import Ecs
 from lifepower import Lifepower
-from seplos import Seplos
+from seplos-multi import Seplos
 
 supported_bms_types = [
     {"bms": LltJbd, "baud": 9600},
