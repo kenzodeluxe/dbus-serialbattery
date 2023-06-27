@@ -223,7 +223,7 @@ PUBLISH_CONFIG_VALUES = int(config["DEFAULT"]["PUBLISH_CONFIG_VALUES"])
 BMS_TYPE = config["DEFAULT"]["BMS_TYPE"]
 
 # Seplos related
-SEPLOS_PUBLISH_MQTT = int(config["DEFAULT"]["SEPLOS_PUBLISH_MQTT"])
+SEPLOS_PUBLISH_MQTT = bool(config["DEFAULT"]["SEPLOS_PUBLISH_MQTT"])
 SEPLOS_BATTERY_PACKS = int(config["DEFAULT"]["SEPLOS_BATTERY_PACKS"])
 
 def constrain(val, min_val, max_val):

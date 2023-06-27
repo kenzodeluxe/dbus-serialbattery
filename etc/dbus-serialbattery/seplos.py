@@ -22,8 +22,12 @@ class Seplos(Battery):
         self.mqtt_topic = 'seplos'
         self.mqtt_host = 'localhost'
 
-    def convert_address(self, address):
-        send = '20' + address + '4642E00201'
+    def convert_address(self, address, command='metrics'):
+        if command == 'metrics':
+            CID2 = '42'
+        elif command == 'alarms':
+            CID2 = '44'
+        send = '20' + address + f'46{CID2}E00201'
         sum = 0
         for i in range(len(send)):
             sum += ord(send[i])
@@ -257,25 +261,45 @@ class Seplos(Battery):
             return True
 
     def read_status_data(self):
-        responses = {}
+        metrics_responses = {}
+        alarms_responses = {}
         ser = serial.Serial(self.port, self.baud_rate, timeout = 0.1, write_timeout = 0.1)
 
         if ser.is_open:
             for pack_id in range(1,self.battery_packs+1):
                 if pack_id < 10:
                     pack_id = '0' + str(pack_id)
-                command = self.convert_address(pack_id)
+                
+                # get metrics responses
+                command = self.convert_address(pack_id, command='metrics')
                 ser.write(command.encode())
                 sleep(0.25)
                 len_return_data = ser.inWaiting()
                 if len_return_data == 0:
-                    logger.error(f'Did not receive valid response from pack {pack_id}')
+                    logger.error(f'Did not receive valid response for metrics request from pack {pack_id}')
                     continue
                 return_data = ser.read(len_return_data)
-                responses[pack_id] = return_data
+                metrics_responses[pack_id] = return_data
+
+                """
+                # get alarm responses
+                command = self.convert_address(pack_id, command='alarms')
+                ser.write(command.encode())
+                sleep(0.25)
+                len_return_data = ser.inWaiting()
+                if len_return_data == 0:
+                    logger.error(f'Did not receive valid response for alarm data request from pack {pack_id}')
+                    continue
+                return_data = ser.read(len_return_data)
+                alarms_responses[pack_id] = return_data
+                """
         ser.close()
-        if len(responses) > 0:
-            result = self.get_bms_information(responses)
+        """
+        if len(alarms_responses) > 0:
+            print(alarms_responses)
+        """
+        if len(metrics_responses) > 0:
+            result = self.get_bms_information(metrics_responses)
             return result
         else:
             return False
